@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Canchas - Administración</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #eee; }
+        .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td, th { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #f8f9fa; }
+        input, select, textarea { padding: 8px; box-sizing: border-box; margin-right: 5px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { cursor: pointer; padding: 8px 12px; border: none; border-radius: 4px; background: #007bff; color: white; }
+        button:hover { background: #0056b3; }
+        .btn-save { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        #login-screen { max-width: 350px; margin: 100px auto; text-align: center; }
+        .formulario-oculto { background: #e9ecef; display: none; padding: 15px; border-radius: 8px; margin-bottom: 20px; margin-top: 15px; }
+        .header-panel { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen" class="box">
+    <h3>Acceso Administración 🏟️</h3>
+    <input type="password" id="pass" placeholder="Contraseña" style="width: 100%;">
+    <button onclick="login()" style="width: 100%;">Entrar</button>
+</div>
+
+<div id="admin-panel" style="display:none;">
+    
+    <div class="header-panel">
+        <h1>Panel de Control</h1>
+        <button class="btn-danger" onclick="cerrarSesion()">Cerrar Sesión 🚪</button>
+    </div>
+
+    <div class="box" style="border-left: 5px solid #6f42c1;">
+        <h2>📱 Configuración del Menú (Bot WhatsApp)</h2>
+        <table>
+            <thead><tr><th>Nro</th><th>Título en el Menú</th><th>Respuesta del Bot</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-menu"></tbody>
+        </table>
+        
+        <button onclick="mostrarFormularioMenu()" style="margin-top:15px; background: #6f42c1;">+ Agregar Opción Informativa</button>
+        
+        <div id="form-menu" class="formulario-oculto">
+            <h3>Nueva Opción del Menú</h3>
+            <input type="number" id="nm-num" placeholder="Nro (ej: 4)" style="width: 120px;">
+            <input type="text" id="nm-tit" placeholder="Título (ej: Ver Precios)">
+            <textarea id="nm-txt" placeholder="Respuesta del bot (ej: La cancha cuesta $10.000...)" rows="2" style="width: 100%;"></textarea>
+            <br>
+            <button class="btn-save" onclick="guardarNuevoMenu()">Guardar Opción 💾</button>
+            <button class="btn-danger" onclick="document.getElementById('form-menu').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+    
+    <div class="box">
+        <h2>Gestión de Canchas</h2>
+        <table>
+            <thead><tr><th>Nombre Actual</th><th>Tipo</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-canchas"></tbody>
+        </table>
+
+        <button onclick="mostrarFormularioCancha()" style="margin-top:15px; background: #17a2b8;">+ Agregar Nueva Cancha</button>
+
+        <div id="form-cancha" class="formulario-oculto">
+            <h3>Nueva Cancha</h3>
+            <input type="text" id="nc-nom" placeholder="Nombre (ej: Cancha 3)">
+            <select id="nc-tip">
+                <option value="futbol">Fútbol</option>
+                <option value="padel">Pádel</option>
+            </select>
+            <br>
+            <button class="btn-save" onclick="guardarNuevaCancha()">Guardar Cancha 💾</button>
+            <button class="btn-danger" onclick="document.getElementById('form-cancha').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="box">
+        <h2>Reservas y Turnos</h2>
+        <button onclick="mostrarFormularioReserva()" style="margin-bottom: 15px; background: #ffc107; color: black;">+ Cargar Reserva Manual</button>
+        
+        <div style="background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <label for="filtro-fecha"><strong>📅 Filtrar por fecha: </strong></label>
+            <input type="date" id="filtro-fecha" onchange="cargarDatos()" style="margin-bottom: 0; display: inline-block; width: auto;">
+            <button onclick="document.getElementById('filtro-fecha').value=''; cargarDatos()" style="background: #6c757d; margin-bottom: 0; display: inline-block;">Ver Todos</button>
+        </div>
+
+        <div id="form-reserva" class="formulario-oculto">
+            <h3>Nueva Reserva Manual</h3>
+            <input type="text" id="res-tel" placeholder="Nro Cliente (Ej: 549...)">
+            <select id="res-dep" onchange="filtrarCanchasPorDeporte()">
+                <option value="futbol">Fútbol</option>
+                <option value="padel">Pádel</option>
+            </select>
+            <input type="date" id="res-fecha">
+            <input type="time" id="res-hora" step="1800">
+            <select id="res-cancha"></select>
+            <br>
+            <button class="btn-save" onclick="guardarReservaManual()">Guardar Turno 💾</button>
+            <button class="btn-danger" onclick="document.getElementById('form-reserva').style.display='none'">Cancelar</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Cancha</th>
+                    <th>Cliente (WA)</th>
+                    <th>Comprobante</th>
+                    <th>Estado / Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="body-reservas"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let canchasGlobal = []; 
+
+    // --- AUTENTICACIÓN Y SESIÓN ---
+    async function login() {
+        const password = document.getElementById('pass').value;
+        const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ password }) });
+        if (res.ok) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            cargarDatos();
+        } else { 
+            Swal.fire('Error', 'Contraseña incorrecta', 'error'); 
+        }
+    }
+
+    async function verificarSesion() {
+        try {
+            const res = await fetch('/api/canchas'); 
+            if (res.ok) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                cargarDatos();
+            }
+        } catch (error) { console.error("Error de sesión:", error); }
+    }
+
+    function cerrarSesion() {
+        Swal.fire({
+            title: '¿Cerrar sesión?',
+            text: "Tendrás que volver a ingresar tu contraseña.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await fetch('/api/logout', { method: 'POST' });
+                location.reload(); 
+            }
+        });
+    }
+
+    // --- CARGA GENERAL DE DATOS ---
+    async function cargarDatos() {
+        const resM = await fetch('/api/menu');
+        if (resM.status === 401) return location.reload();
+        const menu = await resM.json();
+        
+        document.getElementById('tabla-menu').innerHTML = menu.map(m => `
+            <tr>
+                <td><input type="number" id="m-num-${m.id}" value="${m.numero_opcion}" style="width: 60px;"></td>
+                <td><input type="text" id="m-tit-${m.id}" value="${m.titulo}" style="width:100%;"></td>
+                <td>
+                    ${m.tipo_accion === 'informativo' 
+                        ? `<textarea id="m-txt-${m.id}" rows="2" style="width:100%;">${m.texto_respuesta || ''}</textarea>` 
+                        : `<span style="color: gray; font-size: 12px;">(Acción de Sistema: No editable)</span>`}
+                </td>
+                <td>
+                    <button class="btn-save" onclick="guardarMenu(${m.id})">Guardar</button>
+                    ${m.tipo_accion === 'informativo' ? `<button class="btn-danger" onclick="eliminarMenu(${m.id})">Borrar</button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+
+        const resC = await fetch('/api/canchas');
+        canchasGlobal = await resC.json();
+        document.getElementById('tabla-canchas').innerHTML = canchasGlobal.map(c => `
+            <tr>
+                <td><input type="text" id="nombre-${c.id}" value="${c.nombre}" style="width:100%;"></td>
+                <td><select id="tipo-${c.id}"><option value="futbol" ${c.tipo === 'futbol' ? 'selected' : ''}>Fútbol</option><option value="padel" ${c.tipo === 'padel' ? 'selected' : ''}>Pádel</option></select></td>
+                <td><button class="btn-save" onclick="guardarCambios(${c.id})">Guardar</button></td>
+            </tr>
+        `).join('');
+
+        const fechaFiltro = document.getElementById('filtro-fecha') ? document.getElementById('filtro-fecha').value : '';
+        const urlFiltro = fechaFiltro ? `/api/reservas?fecha=${fechaFiltro}` : '/api/reservas';
+        
+        const resR = await fetch(urlFiltro);
+        const reservas = await resR.json();
+        
+        document.getElementById('body-reservas').innerHTML = reservas.map(r => {
+            let htmlComprobante = r.comprobante_url || 'N/A';
+            if (r.comprobante_url && r.comprobante_url.includes('/uploads/')) {
+                if (r.comprobante_url.endsWith('.pdf')) {
+                    htmlComprobante = `<a href="${r.comprobante_url}" target="_blank" style="display:inline-block; padding:6px 10px; background:#17a2b8; color:white; border-radius:4px; text-decoration:none; font-size:12px;">📄 Ver PDF</a>`;
+                } else {
+                    htmlComprobante = `<a href="${r.comprobante_url}" target="_blank"><img src="${r.comprobante_url}" style="width: 60px; height: auto; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;"></a>`;
+                }
+            } else if (r.comprobante_url) {
+                htmlComprobante = `<span>${r.comprobante_url}</span>`;
+            }
+
+            let htmlBotones = '<span style="color:green; font-weight:bold;">✅ Confirmado</span>';
+            if (r.estado === 'pendiente') {
+                htmlBotones = `
+                    <button class="btn-save" style="padding: 6px; margin-bottom: 4px; width: 100%;" onclick="cambiarEstadoTurno(${r.id}, 'confirmar')">✔️ Aprobar</button><br>
+                    <button class="btn-danger" style="padding: 6px; width: 100%;" onclick="cambiarEstadoTurno(${r.id}, 'rechazar')">❌ Rechazar</button>
+                `;
+            }
+
+            const bgColor = r.estado === 'pendiente' ? '#fff3cd' : 'white';
+
+            return `
+                <tr style="background-color: ${bgColor}">
+                    <td>${r.fecha}</td>
+                    <td>${r.hora}hs</td>
+                    <td>${r.cancha}</td>
+                    <td>${r.numero_whatsapp}</td>
+                    <td style="text-align: center;">${htmlComprobante}</td>
+                    <td style="text-align: center;">${htmlBotones}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // --- FUNCIONES DEL MENÚ DINÁMICO ---
+    function mostrarFormularioMenu() { document.getElementById('form-menu').style.display = 'block'; }
+
+    async function guardarNuevoMenu() {
+        const num = document.getElementById('nm-num').value;
+        const tit = document.getElementById('nm-tit').value;
+        const txt = document.getElementById('nm-txt').value;
+        
+        if (!num || !tit || !txt) return Swal.fire('Atención', 'Por favor, completá todos los campos.', 'warning');
+
+        const res = await fetch('/api/menu', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ numero_opcion: num, titulo: tit, texto_respuesta: txt }) });
+        
+        if (res.ok) { 
+            Swal.fire('¡Éxito!', 'Menú agregado correctamente', 'success');
+            document.getElementById('form-menu').style.display = 'none';
+            document.getElementById('nm-num').value = '';
+            document.getElementById('nm-tit').value = '';
+            document.getElementById('nm-txt').value = '';
+            cargarDatos(); 
+        } else { 
+            Swal.fire('Error', 'Verificá que el número de opción no esté repetido.', 'error');
+        }
+    }
+
+    async function guardarMenu(id) {
+        const num = document.getElementById(`m-num-${id}`).value;
+        const tit = document.getElementById(`m-tit-${id}`).value;
+        const txtEl = document.getElementById(`m-txt-${id}`);
+        const txt = txtEl ? txtEl.value : null;
+
+        const res = await fetch('/api/menu', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, numero_opcion: num, titulo: tit, texto_respuesta: txt }) });
+        if (res.ok) { Swal.fire('Guardado', 'La opción se actualizó.', 'success'); cargarDatos(); } else { Swal.fire('Error', 'No se pudo actualizar.', 'error'); }
+    }
+
+    function eliminarMenu(id) {
+        Swal.fire({
+            title: '¿Borrar opción?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, borrar',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await fetch(`/api/menu/${id}`, { method: 'DELETE' });
+                cargarDatos();
+                Swal.fire('Eliminado', 'La opción del menú fue borrada.', 'success');
+            }
+        });
+    }
+
+    // --- FUNCIONES DE CANCHAS ---
+    function mostrarFormularioCancha() { document.getElementById('form-cancha').style.display = 'block'; }
+
+    async function guardarNuevaCancha() {
+        const nombre = document.getElementById('nc-nom').value; 
+        const tipo = document.getElementById('nc-tip').value;
+        
+        if (!nombre) return Swal.fire('Atención', 'Falta el nombre de la cancha.', 'warning');
+
+        const res = await fetch('/api/canchas', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ nombre, tipo }) });
+        
+        if (res.ok) {
+            Swal.fire('¡Éxito!', 'Cancha agregada', 'success');
+            document.getElementById('form-cancha').style.display = 'none';
+            document.getElementById('nc-nom').value = '';
+            cargarDatos();
+        }
+    }
+
+    async function guardarCambios(id) {
+        const nombre = document.getElementById(`nombre-${id}`).value;
+        const tipo = document.getElementById(`tipo-${id}`).value;
+        await fetch('/api/canchas', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, nombre, tipo }) });
+        Swal.fire('Guardado', 'Cancha actualizada', 'success'); cargarDatos();
+    }
+
+    // --- FUNCIONES DE RESERVAS ---
+    function mostrarFormularioReserva() { document.getElementById('form-reserva').style.display = 'block'; filtrarCanchasPorDeporte(); }
+    
+    function filtrarCanchasPorDeporte() {
+        const dep = document.getElementById('res-dep').value;
+        document.getElementById('res-cancha').innerHTML = canchasGlobal.filter(c => c.tipo === dep).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+    }
+    
+    async function guardarReservaManual() {
+        const num = document.getElementById('res-tel').value || "Manual";
+        const dep = document.getElementById('res-dep').value;
+        const fec = document.getElementById('res-fecha').value;
+        const hor = document.getElementById('res-hora').value;
+        const c_id = document.getElementById('res-cancha').value;
+
+        if (!fec || !hor || !c_id) return Swal.fire('Atención', 'Faltan datos para crear la reserva.', 'warning');
+        
+        const res = await fetch('/api/reservas', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ numero_whatsapp: num, deporte: dep, fecha: fec, hora: hor, cancha_id: c_id }) });
+        if (res.ok) { 
+            Swal.fire('¡Turno guardado!', 'La reserva manual fue agregada.', 'success'); 
+            document.getElementById('form-reserva').style.display = 'none'; 
+            cargarDatos(); 
+        }
+    }
+
+    function cambiarEstadoTurno(id, accion) {
+        const textoAccion = accion === 'confirmar' ? 'aprobar' : 'rechazar';
+        const colorBoton = accion === 'confirmar' ? '#28a745' : '#dc3545';
+
+        Swal.fire({
+            title: `¿${textoAccion.toUpperCase()} turno?`,
+            text: `El bot le avisará al cliente por WhatsApp.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: colorBoton,
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${textoAccion}`,
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const res = await fetch(`/api/reservas/${id}/estado`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ accion })
+                });
+                if (res.ok) {
+                    Swal.fire('Listo', `El turno fue ${accion === 'confirmar' ? 'aprobado' : 'rechazado'}.`, 'success');
+                    cargarDatos(); 
+                } else {
+                    Swal.fire('Error', 'Hubo un error al procesar la solicitud.', 'error');
+                }
+            }
+        });
+    }
+
+    // Ejecutar verificación al iniciar
+    verificarSesion();
+
+</script>
+</body>
+</html>

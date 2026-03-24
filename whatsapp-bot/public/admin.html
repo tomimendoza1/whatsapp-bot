@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Control - Bot WhatsApp</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .card { background: white; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; }
+        button { background: #25d366; color: white; border: none; padding: 10px 20px; cursor: pointer; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>⚙️ Configuración del Bot</h2>
+        <label>Precio Servicio Básico ($)</label>
+        <input type="text" id="precio_basico">
+        <label>Horario de Atención</label>
+        <input type="text" id="horario_atencion">
+        <button onclick="guardarConfig()">Actualizar Valores</button>
+        <p id="mensaje"></p>
+    </div>
+
+    <script>
+        // Cargar valores actuales al abrir
+        async function cargar() {
+            const res = await fetch('/api/config');
+            const data = await res.json();
+            document.getElementById('precio_basico').value = data.precio_basico;
+            document.getElementById('horario_atencion').value = data.horario_atencion;
+        }
+        
+        async function guardarConfig() {
+            const p = document.getElementById('precio_basico').value;
+            const h = document.getElementById('horario_atencion').value;
+            await fetch('/api/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ precio_basico: p, horario_atencion: h })
+            });
+            document.getElementById('mensaje').innerText = "✅ ¡Actualizado!";
+        }
+        cargar();
+    </script>
+</body>
+</html>
+(/^\d{2}\/\d{2}$/.test(text)) 

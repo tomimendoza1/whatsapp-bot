@@ -11,11 +11,13 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.5",
     "bullmq": "^5.70.1",
     "dayjs": "^1.11.20",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-session": "^1.19.0",
     "fastify": "^5.7.4",
     "ioredis": "^5.9.3",
     "pg": "^8.20.0"
